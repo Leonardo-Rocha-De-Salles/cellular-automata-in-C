@@ -1,0 +1,20 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-std=c17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/usr/include/SDL2",
+      "-D_REENTRANT",
+      "-o",
+      "sand",
+      "sand.c"
+    ],
+    "directory": "/home/lrocha/OneDrive/Projects/SandSim",
+    "file": "/home/lrocha/OneDrive/Projects/SandSim/sand.c",
+    "output": "/home/lrocha/OneDrive/Projects/SandSim/sand"
+  }
+]

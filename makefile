@@ -1,0 +1,3 @@
+CFLAGS=-std=c17 -Wall -Wextra -Werror -g
+all:
+	gcc sand.c -o sand $(CFLAGS) `sdl2-config --cflags --libs`
