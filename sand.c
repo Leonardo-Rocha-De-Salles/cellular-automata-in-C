@@ -181,32 +181,15 @@ void doInput(mainSim* mainWindow, World* world, Input* input, Button** button, s
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				if(event.window.windowID == mainWindow -> WINDOW -> WindowID){
-				switch(event.button.button){
-						break;}
-				/*
-					case SDL_BUTTON_LEFT:
-						input->material = SAND;
-						input -> m1 = true;
-						SDL_Log("Mouse (%d,%d)\n", mouseX, mouseY);
-						break;
-					case SDL_BUTTON_RIGHT:
-						input->material = EMPTY;
-						input -> m2 = true;
-						break;
-					default:
-						break;
-				}*/
-			} else if(event.window.windowID == materialWindow -> WindowID){
-				for(int i = 0; i < 3; i++){
-					if(event.button.button == SDL_BUTTON_LEFT && button[i] -> is_hovered){
-						button[i] -> is_pressed = true;
-						button[i] -> on_click(input);
-					}
+				if(event.window.windowID == materialWindow -> WindowID){
+					for(int i = 0; i < 3; i++){
+						if(event.button.button == SDL_BUTTON_LEFT && button[i] -> is_hovered){
+							button[i] -> is_pressed = true;
+							button[i] -> on_click(input);
+						}
 					}
 				}
 				break;
-
 			case SDL_MOUSEMOTION:
 				if(event.window.windowID == mainWindow -> WINDOW -> WindowID){
 				if(event.button.button == SDL_BUTTON_LEFT){
@@ -227,28 +210,13 @@ void doInput(mainSim* mainWindow, World* world, Input* input, Button** button, s
 				}}
 				break;
 			case SDL_MOUSEBUTTONUP:
-				if(event.window.windowID == mainWindow -> WINDOW -> WindowID){
-				switch(event.button.button){/*
-					case SDL_BUTTON_LEFT:
-						input -> m1 = false;
-						break;
-					case SDL_BUTTON_RIGHT:
-						input -> m2 = false;
-						break;*/
-					default:
-						input ->material = SAND;
-						break;
-				}
-				}
-				else{
 				for(int i = 0; i < 3; i++){
 					if(event.button.button == SDL_BUTTON_LEFT && button[i] -> is_pressed){
 						button[i] ->is_pressed = false;
-				}	}
+						}	
 				}
-				break;
-					default:
-				break;
+				default:
+					break;
 		
 			case SDL_KEYDOWN:
 				switch(event.key.keysym.sym){
@@ -283,93 +251,161 @@ void update_materialWindow(sdl_t* window, Button** btn){
 	SDL_RenderPresent(window->renderer);
 }
 
-/*
-void waterSim(World* world, material current, int below, int right, int left){
+
+void waterSim(World* world, int right, int left, int index){
+	//Caso abbiamo sabbia sotto
+	if(world -> grid[left].pixel_material == EMPTY && world ->grid[right].pixel_material == EMPTY){
+		int number = random();
+		if(number == 0){
+			world -> grid[index] = cells[EMPTY];
+			world -> grid[left] = cells[WATER];
+			return;
+		} else {
+			world -> grid[index] = cells[EMPTY];
+			world -> grid[right] = cells[WATER];
+			return;
+		}
+	} else if (world -> grid[left].pixel_material == EMPTY){
+		world -> grid[index] = cells[EMPTY];
+		world -> grid[left] = cells[WATER];
+		return;
+	} else if (world -> grid[right].pixel_material == EMPTY){
+			world -> grid[index] = cells[EMPTY];
+			world -> grid[right] = cells[WATER];
+			return;
+	}
+	else if(world -> grid[left].pixel_material != EMPTY && world ->grid[right].pixel_material != EMPTY){
+		int number = (rand()%3) - 1;
+		if(number == 0){return;}
+		world -> grid[index] = cells[EMPTY];
+		world -> grid[index + number] = cells[WATER];
+		return;
+	}
 	return;
 }
 
-void sandSim(World* world, material current, int below, int right, int left){
+
+void sandSim(World* world, int right, int left, int index){
+	if(world->grid[left].pixel_material == EMPTY && world->grid[right].pixel_material == EMPTY){
+		int number = random();
+		if(number == 0){
+			world->grid[left] = cells[SAND];
+			world->grid[index] = cells[EMPTY];
+			return;
+		}
+		else{
+			world->grid[right] = cells[SAND];
+			world->grid[index] = cells[EMPTY];
+			return;
+			}
+	}
+	else if(world->grid[right].pixel_material == EMPTY){
+		world->grid[right] = cells[SAND];
+		world->grid[index] = cells[EMPTY];
+			return;
+	}
+	else if(world->grid[left].pixel_material == EMPTY){
+		world->grid[left] = cells[SAND];
+		world->grid[index] = cells[EMPTY];
+			return;
+		}
 	return;
 }
-*/
+
 void mainSimUpdate(World* world){
 	//Il problema principale è come viene updata la sabbia da sinistra a destra nel secondo for loop.
 	for(int y = SCREEN_HEIGHT-1; y>= 0; y--){
 		if(y%2 == 0){
 		for(int x = SCREEN_WIDTH; x >= 0; x--){
 			int index = y*SCREEN_WIDTH + x;
-			if(world ->grid[index].pixel_material == EMPTY){continue;}
-			material current = world -> grid[index].pixel_material;
 
+			material current = world -> grid[index].pixel_material;
 			int below = index + SCREEN_WIDTH;
 			int right = below + 1;
 			int left = below - 1;
 				
-			if(below < (SCREEN_WIDTH-2)*(SCREEN_HEIGHT-1) && world -> grid[below].pixel_material == EMPTY){
-				world -> grid[index] = cells[EMPTY];
-				world -> grid[below] = cells[current];
-				continue;
-			}
-
-
-//QUI DEVO INIZIARE A PROGRAMMARE ACQUA ETC:...
-
-
-				else if(below < SCREEN_WIDTH*SCREEN_HEIGHT && world->grid[below].pixel_material == SAND){
-					if(world->grid[left].pixel_material == EMPTY && world->grid[right].pixel_material == EMPTY){
-						int number = random();
-						if(number == 0){
-							world->grid[left] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
+			if(below < (SCREEN_WIDTH)*(SCREEN_HEIGHT)){
+				switch(current){
+					case EMPTY:
+			//Quando metto il fumo qui dovrò modificarlo
+						continue;
+						break;
+					case SAND:
+						switch(world->grid[below].pixel_material){
+							case EMPTY:
+								world -> grid[index] = cells[EMPTY];
+								world -> grid[below] = cells[SAND];
+								break;
+							case SAND:
+								sandSim(world, right, left, index);
+								break;
+							case WATER:
+								world -> grid[index] = cells[WATER];
+								world -> grid[below] = cells[SAND];
+								break;
+							}
+						break;
+					case WATER:
+						switch (world->grid[below].pixel_material) {
+							case EMPTY:
+								world -> grid[index] = cells[EMPTY];
+								world -> grid[below] = cells[WATER];
+								break;
+							case SAND:
+								waterSim(world, right, left, index);
+								break;
+							case WATER:
+								waterSim(world, right, left, index);
+								break;
 						}
-						else{
-							world->grid[right] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
-						}
-					}
-					else if(world->grid[right].pixel_material == EMPTY){
-							world->grid[right] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
-						}
-					else if(world->grid[left].pixel_material == EMPTY){
-							world->grid[left] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
-						}
-					}
+						break;
 				}
 			}
+		}
+		}
 		else{
 			for(int x = 0; x < SCREEN_WIDTH; x++){
-			int index = y*SCREEN_WIDTH + x;
-			if(world ->grid[index].pixel_material == EMPTY){continue;}
-			else if(world -> grid[index].pixel_material == SAND){
+				int index = y*SCREEN_WIDTH + x;
+				material current = world -> grid[index].pixel_material;
+
 				int below = index + SCREEN_WIDTH;
 				int right = below + 1;
 				int left = below - 1;
-				if(below < SCREEN_WIDTH*SCREEN_HEIGHT && world -> grid[below].pixel_material == EMPTY){
-					world -> grid[index] = cells[EMPTY];
-					world -> grid[below] = cells[SAND];
-				}
-				else if(below < SCREEN_HEIGHT*SCREEN_WIDTH && world->grid[below].pixel_material == SAND){
-					if(world->grid[left].pixel_material == EMPTY && world->grid[right].pixel_material == EMPTY){
-						int number = random();
-						if(number == 0){
-							world->grid[left] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
-						}
-						else{
-							world->grid[right] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
-						}
-					}
-					else if(world->grid[right].pixel_material == EMPTY){
-							world->grid[right] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
-						}
-					else if(world->grid[left].pixel_material == EMPTY){
-							world->grid[left] = cells[SAND];
-							world->grid[index] = cells[EMPTY];
-						}
+
+				if(below < SCREEN_WIDTH*SCREEN_HEIGHT){
+					switch (current) {
+						case EMPTY:
+							continue;
+							break;
+						case SAND:
+							switch (world->grid[below].pixel_material) {
+								case EMPTY:
+									world -> grid[index] = cells[EMPTY];
+									world -> grid[below] = cells[SAND];
+									break;
+								case SAND:
+									sandSim(world, right, left, index);
+									break;
+								case WATER:
+									world -> grid[index] = cells[WATER];
+									world -> grid[below] = cells[SAND];
+									break;
+							}
+						break;
+						case WATER:
+							switch (world->grid[below].pixel_material) {
+								case EMPTY:
+									world -> grid[index] = cells[EMPTY];
+									world -> grid[below] = cells[WATER];
+									break;
+								case SAND:
+									waterSim(world, right, left, index);
+									break;
+								case WATER:
+									waterSim(world, right, left, index);
+									break;
+							}
+							break;
 					}
 				}
 			}
@@ -380,15 +416,17 @@ void mainSimUpdate(World* world){
 
 void button_click_sand(Input* input){
 	input -> material = SAND;
-	SDL_Log("Clicked");
+	SDL_Log("Sand");
 	return;
 }
 void button_click_water(Input* input){
-	input -> material = EMPTY;
+	input -> material = WATER;
+	SDL_Log("Water");
 	return;
 }
 void button_click_empty(Input* input){
-	input -> material = SAND;
+	input -> material = EMPTY;
+	SDL_Log("Empty");
 	return;
 }
 
