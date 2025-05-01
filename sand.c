@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 
 #include "button.h"
@@ -275,11 +276,29 @@ void waterSim(World* world, int right, int left, int index){
 			return;
 	}
 	else if(world -> grid[left].pixel_material != EMPTY && world ->grid[right].pixel_material != EMPTY){
-		int number = (rand()%3) - 1;
-		if(number == 0){return;}
-		world -> grid[index] = cells[EMPTY];
-		world -> grid[index + number] = cells[WATER];
-		return;
+		if(world -> grid[index + 1].pixel_material != EMPTY && world ->grid[index - 1].pixel_material != EMPTY){return;}
+		else if(world -> grid[index + 1].pixel_material == EMPTY && world ->grid[index - 1].pixel_material == EMPTY){
+			int number = (rand()%3) - 1;
+			if(number == 0){return;}
+			world -> grid[index] = cells[EMPTY];
+			world -> grid[index + number] = cells[WATER];
+			return;
+		}
+		else if(world -> grid[index + 1].pixel_material == EMPTY){
+			int number = random();
+			if(number == 0){
+				world -> grid[index + 1] = cells[WATER];
+				world -> grid[index] = cells[EMPTY];
+			}
+			return;
+		} else if(world ->grid[index- 1].pixel_material == EMPTY){
+			int number = random();
+			if(number == 0){
+				world -> grid[index - 1] = cells[WATER];
+				world -> grid[index] = cells[EMPTY];
+			}
+			return;
+		}
 	}
 	return;
 }
@@ -307,6 +326,30 @@ void sandSim(World* world, int right, int left, int index){
 	else if(world->grid[left].pixel_material == EMPTY){
 		world->grid[left] = cells[SAND];
 		world->grid[index] = cells[EMPTY];
+			return;
+		}
+
+	else if(world->grid[left].pixel_material == WATER && world->grid[right].pixel_material == WATER){
+		int number = random();
+		if(number == 0){
+			world->grid[left] = cells[SAND];
+			world->grid[index] = cells[WATER];
+			return;
+		}
+		else{
+			world->grid[right] = cells[SAND];
+			world->grid[index] = cells[WATER];
+			return;
+			}
+	}
+	else if(world->grid[right].pixel_material == WATER){
+		world->grid[right] = cells[SAND];
+		world->grid[index] = cells[WATER];
+			return;
+	}
+	else if(world->grid[left].pixel_material == WATER){
+		world->grid[left] = cells[SAND];
+		world->grid[index] = cells[WATER];
 			return;
 		}
 	return;
