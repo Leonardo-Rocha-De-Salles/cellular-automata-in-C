@@ -53,6 +53,13 @@ typedef struct{
 cell* grid;
 }World;
 
+const uint32_t sandPalette[] = {
+    0xC2B280FF, // Beige chiaro (default)
+    0xD2B48CFF, // Marroncino sabbia
+    0xDEB887FF, // Sabbia dorata
+    0xF4A460FF, // Arancione chiaro
+    0xFFE4C4FF  // Beige molto chiaro
+};
 
 typedef struct{
 	SDL_Window *window;
@@ -128,7 +135,11 @@ void mouseCreate(material material, int mouseX, int mouseY, World* world){
 			if(gridX >= 0 && gridX < SCREEN_WIDTH && gridY >= 0 && gridY < SCREEN_HEIGHT){
 				int index = gridY*SCREEN_WIDTH + gridX;
 				world -> grid[index] = cells[material];
-		}	}
+				if(material == SAND){
+					world -> grid[index].color = sandPalette[rand()%4];
+				}
+			}
+		}
 	}
 	return;
 }
@@ -310,23 +321,28 @@ void sandSim(World* world, int right, int left, int index){
 	if(world->grid[left].pixel_material == EMPTY && world->grid[right].pixel_material == EMPTY){
 		int number = random();
 		if(number == 0){
-			world->grid[left] = cells[SAND];
+			world->grid[left].pixel_material = SAND;
+			world->grid[left].color = world -> grid[index].color;
 			world->grid[index] = cells[EMPTY];
 			return;
 		}
 		else{
-			world->grid[right] = cells[SAND];
+		
+			world->grid[right].pixel_material = SAND;
+			world->grid[right].color = world -> grid[index].color;
 			world->grid[index] = cells[EMPTY];
 			return;
 			}
 	}
 	else if(world->grid[right].pixel_material == EMPTY){
-		world->grid[right] = cells[SAND];
+		world->grid[right].pixel_material = SAND;
+		world->grid[right].color = world -> grid[index].color;
 		world->grid[index] = cells[EMPTY];
-			return;
+		return;
 	}
 	else if(world->grid[left].pixel_material == EMPTY){
-		world->grid[left] = cells[SAND];
+		world->grid[left].pixel_material = SAND;
+		world->grid[left].color = world -> grid[index].color;
 		world->grid[index] = cells[EMPTY];
 			return;
 		}
@@ -376,7 +392,20 @@ void mainSimUpdate(World* world){
 						continue;
 						break;
 					case SAND:
-						continue;
+						switch(world->grid[below].pixel_material){
+							case EMPTY:
+								world -> grid[below].pixel_material = SAND;
+								world ->grid[below].color = world -> grid[index].color;
+								world -> grid[index] = cells[EMPTY];
+								break;
+							case SAND:
+								sandSim(world, right, left, index);
+								break;
+							case WATER:
+								world -> grid[index] = cells[WATER];
+								world -> grid[below] = cells[SAND];
+								break;
+							}
 						break;
 					case WATER:
 						switch (world->grid[below].pixel_material) {
@@ -411,8 +440,21 @@ void mainSimUpdate(World* world){
 							continue;
 							break;
 						case SAND:
-							continue;
-							break;
+							switch (world->grid[below].pixel_material) {
+								case EMPTY:
+									world -> grid[below].pixel_material = SAND;
+									world ->grid[below].color = world -> grid[index].color;
+									world -> grid[index] = cells[EMPTY];
+									break;
+								case SAND:
+									sandSim(world, right, left, index);
+									break;
+								case WATER:
+									world -> grid[index] = cells[WATER];
+									world -> grid[below] = cells[SAND];
+									break;
+							}
+						break;
 						case WATER:
 							switch (world->grid[below].pixel_material) {
 								case EMPTY:
@@ -432,82 +474,6 @@ void mainSimUpdate(World* world){
 			}
 		}
 	}	
-	for(int y = SCREEN_HEIGHT-1; y>= 0; y--){
-		if(y%2 == 0){
-		for(int x = SCREEN_WIDTH; x >= 0; x--){
-			int index = y*SCREEN_WIDTH + x;
-
-			material current = world -> grid[index].pixel_material;
-			int below = index + SCREEN_WIDTH;
-			int right = below + 1;
-			int left = below - 1;
-				
-			if(below < (SCREEN_WIDTH)*(SCREEN_HEIGHT)){
-				switch(current){
-					case EMPTY:
-			//Quando metto il fumo qui dovrò modificarlo
-						continue;
-						break;
-					case SAND:
-						switch(world->grid[below].pixel_material){
-							case EMPTY:
-								world -> grid[index] = cells[EMPTY];
-								world -> grid[below] = cells[SAND];
-								break;
-							case SAND:
-								sandSim(world, right, left, index);
-								break;
-							case WATER:
-								world -> grid[index] = cells[WATER];
-								world -> grid[below] = cells[SAND];
-								break;
-							}
-						break;
-					case WATER:
-						continue;
-						break;
-				}
-			}
-		}
-		}
-		else{
-			for(int x = 0; x < SCREEN_WIDTH; x++){
-				int index = y*SCREEN_WIDTH + x;
-				material current = world -> grid[index].pixel_material;
-
-				int below = index + SCREEN_WIDTH;
-				int right = below + 1;
-				int left = below - 1;
-
-				if(below < SCREEN_WIDTH*SCREEN_HEIGHT){
-					switch (current) {
-						case EMPTY:
-							continue;
-							break;
-						case SAND:
-							switch (world->grid[below].pixel_material) {
-								case EMPTY:
-									world -> grid[index] = cells[EMPTY];
-									world -> grid[below] = cells[SAND];
-									break;
-								case SAND:
-									sandSim(world, right, left, index);
-									break;
-								case WATER:
-									world -> grid[index] = cells[WATER];
-									world -> grid[below] = cells[SAND];
-									break;
-							}
-						break;
-						case WATER:
-							continue;
-							break;
-					}
-				}
-			}
-		}
-	}	
-
 }
 
 
