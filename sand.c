@@ -120,10 +120,13 @@ bool init_sdl(sdl_t* mainWindow, int Width, int Height){
 void mouseCreate(material material, int mouseX, int mouseY, World* world){
 	for(int y = -5; y<5;y++){
 		for(int x = -5; x<5; x++){
-			if(((mouseY*SCREEN_WIDTH)+(SCREEN_WIDTH*y) + mouseX)+x < SCREEN_HEIGHT && ((mouseY*SCREEN_WIDTH)+(SCREEN_WIDTH*y) + mouseX)+ x > 0)
-				world -> grid[((mouseY*SCREEN_WIDTH)+(SCREEN_WIDTH*y) + mouseX)+x] = cells[material];
-		}
-	}	
+			int gridX = mouseX + x;
+			int gridY = mouseY + y;
+			if(gridX >= 0 && gridX < SCREEN_WIDTH && gridY >= 0 && gridY < SCREEN_HEIGHT){
+				int index = gridY*SCREEN_WIDTH + gridX;
+				world -> grid[index] = cells[material];
+		}	}
+	}
 	return;
 }
 
@@ -280,7 +283,7 @@ void update_materialWindow(sdl_t* window, Button** btn){
 	SDL_RenderPresent(window->renderer);
 }
 
-
+/*
 void waterSim(World* world, material current, int below, int right, int left){
 	return;
 }
@@ -288,10 +291,10 @@ void waterSim(World* world, material current, int below, int right, int left){
 void sandSim(World* world, material current, int below, int right, int left){
 	return;
 }
-
+*/
 void mainSimUpdate(World* world){
 	//Il problema principale è come viene updata la sabbia da sinistra a destra nel secondo for loop.
-	for(int y = SCREEN_HEIGHT-2; y>= 0; y--){
+	for(int y = SCREEN_HEIGHT-1; y>= 0; y--){
 		if(y%2 == 0){
 		for(int x = SCREEN_WIDTH; x >= 0; x--){
 			int index = y*SCREEN_WIDTH + x;
@@ -377,6 +380,7 @@ void mainSimUpdate(World* world){
 
 void button_click_sand(Input* input){
 	input -> material = SAND;
+	SDL_Log("Clicked");
 	return;
 }
 void button_click_water(Input* input){
