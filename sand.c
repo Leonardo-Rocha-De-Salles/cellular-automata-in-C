@@ -1,23 +1,25 @@
-#include "SDL.h"
 #include "SDL_error.h"
 #include "SDL_events.h"
 #include "SDL_log.h"
 #include "SDL_mouse.h"
 #include "SDL_pixels.h"
 #include "SDL_platform.h"
+#include "SDL_rect.h"
 #include "SDL_render.h"
 #include "SDL_video.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+
+#include "button.h"
 
 //Dovrei fare la risoluzione custom per rendere migliore, poi aggiungere anche multithreading e robe del genere.
 
 //Fare pulsante per scelta de materiali.
 
+//Quando il mouse tocca sotto l'applicazione crasha, oppure sopra
 
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
@@ -35,8 +37,7 @@ typedef enum{
 	WATER
 }material;
 
-typedef struct{
-	bool m1,m2;
+typedef struct Input{
 	material material;
 }Input;
 
@@ -46,7 +47,7 @@ typedef struct{
 }cell;
 
 typedef struct{
-	cell* grid;
+cell* grid;
 }World;
 
 
@@ -76,6 +77,7 @@ const cell cells[] = {
 int random(){
 	return(rand() % 2);
 }
+
 
 bool init_Sim(mainSim* sim){
 	sim -> texture = SDL_CreateTexture(sim -> WINDOW -> renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -118,9 +120,10 @@ bool init_sdl(sdl_t* mainWindow, int Width, int Height){
 void mouseCreate(material material, int mouseX, int mouseY, World* world){
 	for(int y = -5; y<5;y++){
 		for(int x = -5; x<5; x++){
-			world -> grid[((mouseY*SCREEN_WIDTH)+(SCREEN_WIDTH*y) + mouseX)+x] = cells[material];
+			if(((mouseY*SCREEN_WIDTH)+(SCREEN_WIDTH*y) + mouseX)+x < SCREEN_HEIGHT && ((mouseY*SCREEN_WIDTH)+(SCREEN_WIDTH*y) + mouseX)+ x > 0)
+				world -> grid[((mouseY*SCREEN_WIDTH)+(SCREEN_WIDTH*y) + mouseX)+x] = cells[material];
 		}
-	}
+	}	
 	return;
 }
 
@@ -163,7 +166,7 @@ void cleanupMaterialWindow(sdl_t* mainWindow){
 	return;
 }
 
-void doInput(mainSim* mainWindow, World* world, Input* input){
+void doInput(mainSim* mainWindow, World* world, Input* input, Button** button, sdl_t* materialWindow){
 	SDL_Event event;
 	int mouseX, mouseY;
 	while(SDL_PollEvent(&event)){
@@ -177,6 +180,8 @@ void doInput(mainSim* mainWindow, World* world, Input* input){
 			case SDL_MOUSEBUTTONDOWN:
 				if(event.window.windowID == mainWindow -> WINDOW -> WindowID){
 				switch(event.button.button){
+						break;}
+				/*
 					case SDL_BUTTON_LEFT:
 						input->material = SAND;
 						input -> m1 = true;
@@ -188,38 +193,55 @@ void doInput(mainSim* mainWindow, World* world, Input* input){
 						break;
 					default:
 						break;
-				}
+				}*/
+			} else if(event.window.windowID == materialWindow -> WindowID){
+				for(int i = 0; i < 3; i++){
+					if(event.button.button == SDL_BUTTON_LEFT && button[i] -> is_hovered){
+						button[i] -> is_pressed = true;
+						button[i] -> on_click(input);
+					}
+					}
 				}
 				break;
 
 			case SDL_MOUSEMOTION:
 				if(event.window.windowID == mainWindow -> WINDOW -> WindowID){
-				if(input->m1){
+				if(event.button.button == SDL_BUTTON_LEFT){
 						mouseX = event.motion.x;
 						mouseY = event.motion.y;
 						SDL_Log("Mouse (%d,%d)\n", mouseX, mouseY);
-						mouseCreate(input->material, mouseX, mouseY, world);
+						mouseCreate(input -> material, mouseX, mouseY, world);
 						break;
 				}
-				else if(input->m2){
+				else if(event.button.button == SDL_BUTTON_RIGHT){
 						mouseX = event.motion.x;
 						mouseY = event.motion.y;
-						mouseCreate(input->material, mouseX, mouseY, world);
+						mouseCreate(EMPTY, mouseX, mouseY, world);
 				}
-			}
+			} else if(event.window.windowID == materialWindow -> WindowID){
+				for(int i = 0; i < 3; i++){
+					button[i] -> is_hovered = SDL_PointInRect(&(SDL_Point){event.motion.x, event.motion.y}, &button[i] -> rect);
+				}}
 				break;
 			case SDL_MOUSEBUTTONUP:
 				if(event.window.windowID == mainWindow -> WINDOW -> WindowID){
-				switch(event.button.button){
+				switch(event.button.button){/*
 					case SDL_BUTTON_LEFT:
 						input -> m1 = false;
 						break;
 					case SDL_BUTTON_RIGHT:
 						input -> m2 = false;
-						break;
+						break;*/
 					default:
+						input ->material = SAND;
 						break;
 				}
+				}
+				else{
+				for(int i = 0; i < 3; i++){
+					if(event.button.button == SDL_BUTTON_LEFT && button[i] -> is_pressed){
+						button[i] ->is_pressed = false;
+				}	}
 				}
 				break;
 					default:
@@ -249,29 +271,48 @@ void update_mainWindow(mainSim* mainWindow){
 		SDL_RenderPresent(mainWindow-> WINDOW -> renderer);
 }
 
-void update_materialWindow(sdl_t* window){
+void update_materialWindow(sdl_t* window, Button** btn){
 	SDL_SetRenderDrawColor(window -> renderer, 144, 144, 144, 144);
 	SDL_RenderClear(window -> renderer);
+	for(int i = 0; i < 3; i++){
+	render_button(window -> renderer, btn[i]);
+	}
 	SDL_RenderPresent(window->renderer);
 }
 
-void sandSim(World* world){
+
+void waterSim(World* world, material current, int below, int right, int left){
+	return;
+}
+
+void sandSim(World* world, material current, int below, int right, int left){
+	return;
+}
+
+void mainSimUpdate(World* world){
 	//Il problema principale è come viene updata la sabbia da sinistra a destra nel secondo for loop.
-	bool direction = false;
 	for(int y = SCREEN_HEIGHT-2; y>= 0; y--){
-		if(direction){
-		direction = !direction;
-		for(int x = SCREEN_WIDTH-1; x >= 0; x--){
+		if(y%2 == 0){
+		for(int x = SCREEN_WIDTH; x >= 0; x--){
 			int index = y*SCREEN_WIDTH + x;
-			if(world -> grid[index].pixel_material == SAND){
-				int below = index + SCREEN_WIDTH;
-				int right = below + 1;
-				int left = below - 1;
-				if(below < SCREEN_WIDTH*SCREEN_HEIGHT && world -> grid[below].pixel_material == EMPTY){
-					world -> grid[index] = cells[EMPTY];
-					world -> grid[below] = cells[SAND];
-				}
-				else if(world->grid[below].pixel_material == SAND){
+			if(world ->grid[index].pixel_material == EMPTY){continue;}
+			material current = world -> grid[index].pixel_material;
+
+			int below = index + SCREEN_WIDTH;
+			int right = below + 1;
+			int left = below - 1;
+				
+			if(below < (SCREEN_WIDTH-2)*(SCREEN_HEIGHT-1) && world -> grid[below].pixel_material == EMPTY){
+				world -> grid[index] = cells[EMPTY];
+				world -> grid[below] = cells[current];
+				continue;
+			}
+
+
+//QUI DEVO INIZIARE A PROGRAMMARE ACQUA ETC:...
+
+
+				else if(below < SCREEN_WIDTH*SCREEN_HEIGHT && world->grid[below].pixel_material == SAND){
 					if(world->grid[left].pixel_material == EMPTY && world->grid[right].pixel_material == EMPTY){
 						int number = random();
 						if(number == 0){
@@ -294,11 +335,11 @@ void sandSim(World* world){
 					}
 				}
 			}
-		}
 		else{
-			direction = !direction;
-			for(int x = 0; x < SCREEN_WIDTH; x++){int index = y*SCREEN_WIDTH + x;
-			if(world -> grid[index].pixel_material == SAND){
+			for(int x = 0; x < SCREEN_WIDTH; x++){
+			int index = y*SCREEN_WIDTH + x;
+			if(world ->grid[index].pixel_material == EMPTY){continue;}
+			else if(world -> grid[index].pixel_material == SAND){
 				int below = index + SCREEN_WIDTH;
 				int right = below + 1;
 				int left = below - 1;
@@ -306,7 +347,7 @@ void sandSim(World* world){
 					world -> grid[index] = cells[EMPTY];
 					world -> grid[below] = cells[SAND];
 				}
-				else if(world->grid[below].pixel_material == SAND){
+				else if(below < SCREEN_HEIGHT*SCREEN_WIDTH && world->grid[below].pixel_material == SAND){
 					if(world->grid[left].pixel_material == EMPTY && world->grid[right].pixel_material == EMPTY){
 						int number = random();
 						if(number == 0){
@@ -333,12 +374,42 @@ void sandSim(World* world){
 	}	
 }
 
+
+void button_click_sand(Input* input){
+	input -> material = SAND;
+	return;
+}
+void button_click_water(Input* input){
+	input -> material = EMPTY;
+	return;
+}
+void button_click_empty(Input* input){
+	input -> material = SAND;
+	return;
+}
+
+
 int main(int argc, char** argv){
 	(void)argc;
 	(void)argv;
 	sdl_t* mainWindow = (sdl_t*)malloc(sizeof(sdl_t));
 	sdl_t* materialWindow = (sdl_t*)malloc(sizeof(sdl_t));
 	mainSim* mainsim = (mainSim*)malloc(sizeof(mainSim));
+
+
+	SDL_Color normal =  {0,0,255,255};
+	SDL_Color hover = {0,0,128,128};
+	SDL_Color pressed = {0,0,64,64};
+
+	SDL_Color normal2 = {100,0,0,255};
+	SDL_Color normal3 = {0,200,0,255};
+
+	Button* btn[3];
+
+	btn[0] = create_button(0, 0, 100, 60, normal, hover, pressed, button_click_sand);
+	btn[1] = create_button(0, 100, 100, 60, normal2, hover, pressed, button_click_empty);
+	btn[2] = create_button(0, 200, 100, 60, normal3, hover, pressed, button_click_water);
+
 
 	if(!init_sdl(materialWindow, SCREEN_WIDTH/8, SCREEN_HEIGHT)){exit(EXIT_FAILURE);}
 	if(!init_sdl(mainWindow, SCREEN_WIDTH, SCREEN_HEIGHT)){exit(EXIT_FAILURE);}
@@ -352,20 +423,18 @@ int main(int argc, char** argv){
 	world -> grid = (cell*)malloc(SCREEN_HEIGHT*SCREEN_WIDTH*sizeof(cell));
 	
 	Input* input = (Input*)malloc(sizeof(Input));
-
-	input -> m1 = false;
-	input -> m2 = false;
+	input -> material = EMPTY;
 
 	init_texture(mainsim, world);
 	
 	while(mainsim -> state != QUIT){
 		if(mainsim -> state  == PAUSED){continue;}
-		doInput(mainsim, world, input);
-		sandSim(world);
+		doInput(mainsim, world, input, btn, materialWindow);
+		mainSimUpdate(world);
 		update_texture(mainsim, world);
 		update_mainWindow(mainsim);
-		update_materialWindow(materialWindow);
-		SDL_Delay(2);
+		update_materialWindow(materialWindow, btn);
+		SDL_Delay(1);
 	}
 	cleanupMaterialWindow(materialWindow);
 	cleanupMain(mainsim);

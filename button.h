@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <SDL.h>
 
+typedef struct Input Input;
 typedef struct{
     SDL_Rect rect;
     bool is_hovered;
@@ -8,13 +9,11 @@ typedef struct{
     SDL_Color color;    
     SDL_Color hover_color;
     SDL_Color pressed_color;
-    void (*on_click)(void*);
+    void (*on_click)(Input* input);
 }Button;
 
-Button* create_button(int x, int y, int width, int height, SDL_Color normal_color, SDL_Color hover_color, SDL_Color pressed_color,  void (*on_click)(void*));
+Button* create_button(int x, int y, int width, int height, SDL_Color normal_color, SDL_Color hover_color, SDL_Color pressed_color,  void (*on_click)(Input* input));
 
-void event_button(Button* button, SDL_Event* event);
-
-void render_button(Button* button, SDL_Renderer* renderer);
+void render_button(SDL_Renderer* renderer,Button* button);
 
 
