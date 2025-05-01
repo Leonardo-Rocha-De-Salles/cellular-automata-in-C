@@ -21,6 +21,8 @@
 //Fare pulsante per scelta de materiali.
 
 //Quando il mouse tocca sotto l'applicazione crasha, oppure sopra
+//
+//Dovrei fare un sistema di priorità di aggiornamento dei materiali, per esempio l'acqua dovrebbe aggiornarsi prima della sabbia.
 
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
@@ -374,6 +376,79 @@ void mainSimUpdate(World* world){
 						continue;
 						break;
 					case SAND:
+						continue;
+						break;
+					case WATER:
+						switch (world->grid[below].pixel_material) {
+							case EMPTY:
+								world -> grid[index] = cells[EMPTY];
+								world -> grid[below] = cells[WATER];
+								break;
+							case SAND:
+								waterSim(world, right, left, index);
+								break;
+							case WATER:
+								waterSim(world, right, left, index);
+								break;
+						}
+						break;
+				}
+			}
+		}
+		}
+		else{
+			for(int x = 0; x < SCREEN_WIDTH; x++){
+				int index = y*SCREEN_WIDTH + x;
+				material current = world -> grid[index].pixel_material;
+
+				int below = index + SCREEN_WIDTH;
+				int right = below + 1;
+				int left = below - 1;
+
+				if(below < SCREEN_WIDTH*SCREEN_HEIGHT){
+					switch (current) {
+						case EMPTY:
+							continue;
+							break;
+						case SAND:
+							continue;
+							break;
+						case WATER:
+							switch (world->grid[below].pixel_material) {
+								case EMPTY:
+									world -> grid[index] = cells[EMPTY];
+									world -> grid[below] = cells[WATER];
+									break;
+								case SAND:
+									waterSim(world, right, left, index);
+									break;
+								case WATER:
+									waterSim(world, right, left, index);
+									break;
+							}
+							break;
+					}
+				}
+			}
+		}
+	}	
+	for(int y = SCREEN_HEIGHT-1; y>= 0; y--){
+		if(y%2 == 0){
+		for(int x = SCREEN_WIDTH; x >= 0; x--){
+			int index = y*SCREEN_WIDTH + x;
+
+			material current = world -> grid[index].pixel_material;
+			int below = index + SCREEN_WIDTH;
+			int right = below + 1;
+			int left = below - 1;
+				
+			if(below < (SCREEN_WIDTH)*(SCREEN_HEIGHT)){
+				switch(current){
+					case EMPTY:
+			//Quando metto il fumo qui dovrò modificarlo
+						continue;
+						break;
+					case SAND:
 						switch(world->grid[below].pixel_material){
 							case EMPTY:
 								world -> grid[index] = cells[EMPTY];
@@ -389,18 +464,7 @@ void mainSimUpdate(World* world){
 							}
 						break;
 					case WATER:
-						switch (world->grid[below].pixel_material) {
-							case EMPTY:
-								world -> grid[index] = cells[EMPTY];
-								world -> grid[below] = cells[WATER];
-								break;
-							case SAND:
-								waterSim(world, right, left, index);
-								break;
-							case WATER:
-								waterSim(world, right, left, index);
-								break;
-						}
+						continue;
 						break;
 				}
 			}
@@ -436,24 +500,14 @@ void mainSimUpdate(World* world){
 							}
 						break;
 						case WATER:
-							switch (world->grid[below].pixel_material) {
-								case EMPTY:
-									world -> grid[index] = cells[EMPTY];
-									world -> grid[below] = cells[WATER];
-									break;
-								case SAND:
-									waterSim(world, right, left, index);
-									break;
-								case WATER:
-									waterSim(world, right, left, index);
-									break;
-							}
+							continue;
 							break;
 					}
 				}
 			}
 		}
 	}	
+
 }
 
 
